@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="Keywords" content="" />
+  <meta name="Description" content="" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=2,user-scalable=yes,minimal-ui" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>canvas钻石</title>
+  <style>
+    html,body{margin:0;padding:0;height:100%;overflow:hidden;background-color:#000;}
+  </style>
+</head>
+<body>
+  <canvas></canvas>
+  <script>
+  
+  "use strict";
+var run=window.requestAnimationFrame||window.webkitRequestAnimationFrame||function(cb){return setTimeout(cb,16.6)},
+   W=window.innerWidth,
+   H=window.innerHeight;
+
+  function diamond(cx,cy,radius,cvs)
+  {
+      var Vector3d=typeof Float32Array==="function"?Float32Array:Array,
+       len=8,len1=32,total=len*3*3+len1*3*2+3,
+       fl=radius*2.5,
+       g=cvs.getContext("2d"),
+       idx=0,
+       arr=new Vector3d(total),
+       move=new Vector3d(total),
+       i=0,radius1,startAngle,angle,
+       angleX=0,angleY=0.005;
+
+       cvs.width=W;
+       cvs.height=H;
+       g.strokeStyle="#FFF";
+
+   for(radius1=radius*0.58,angle=Math.PI*2/len;i<len;i++)
+   {
+     arr[idx++]=Math.cos(angle*i)*radius1;
+     arr[idx++]=Math.sin(angle*i)*radius1;
+     arr[idx++]=-radius*0.175;
+   }
+
+   for(i=0,radius1=radius*0.8,angle=Math.PI*2/len,startAngle=angle/2;i<len;i++)
+   {
+     arr[idx++]=Math.cos(angle*i+startAngle)*radius1;
+     arr[idx++]=Math.sin(angle*i+startAngle)*radius1;
+     arr[idx++]=-radius*0.08;
+   }
+
+   
+   for(i=0,angle=Math.PI*2/len1;i<len1;i++)
+   {
+     arr[idx++]=Math.cos(angle*i)*radius;
+     arr[idx++]=Math.sin(angle*i)*radius;
+     arr[idx++]=radius*(0.162+(i&1)*0.025);
+   }
+
+   for(i=0,angle=Math.PI*2/len1;i<len1;i++)
+   {
+     arr[idx++]=Math.cos(angle*i)*radius;
+     arr[idx++]=Math.sin(angle*i)*radius;
+     arr[idx++]=radius*(0.187-(i&1)*0.025);
+   }
+
+   for(i=0,radius1=radius*0.25,angle=Math.PI*2/len;i<len;i++)
+   {
+     arr[idx++]=Math.cos(angle*i)*radius1;
+     arr[idx++]=Math.sin(angle*i)*radius1;
+     arr[idx++]=radius*0.8;
+   }
+   arr[idx++]=0;
+   arr[idx++]=0;
+   arr[idx++]=radius;
+
+   function rotate(angleX,angleY)
+  {
+     var cX=Math.cos(angleX),
+         sX=Math.sin(angleX),
+         cY=Math.cos(angleY),
+         sY=Math.sin(angleY),
+         x1,y1,z1,
+         i=0,len=arr.length;
+     for(;i<len;i+=3)
+     {
+         x1=cY*arr[i]-sY*arr[i+2],
+         z1=cY*arr[i+2]+sY*arr[i],
+         y1=cX*arr[i+1]-sX*z1;
+         z1=cX*z1+sX*arr[i+1];
+
+         arr[i]=x1;
+         arr[i+1]=y1;
+         arr[i+2]=z1;
+     }
+  }
+
+  function setPerspective(){
+    for(var i=0,scale,len=arr.length;i<len;i+=3)
+    {
+      scale=fl/(fl+arr[i+2]);
+      move[i]=arr[i]*scale;
+      move[i+1]=arr[i+1]*scale;
+    }
+  }
+
+  function draw(arr){
+     var idx=0,st=len*3*2+len1*3*2;
+     g.clearRect(0,0,W,H);
+     g.save();
+     g.translate(cx,cy);
+     g.beginPath();
+     g.moveTo(arr[idx++],arr[idx++]);
+     idx++;
+     for(i=1;i<len;i++)
+     {
+       g.lineTo(arr[idx++],arr[idx++]);
+       idx++;
+     }
+     g.closePath();
+     g.stroke();
+
+     g.beginPath();
+     g.moveTo(arr[0],arr[1]);
+     for(i=0;i<len-1;i++)
+     {
+       g.lineTo(arr[idx++],arr[idx++]);
+       g.lineTo(arr[idx-len*3+1],arr[idx-len*3+2]);
+       idx++;
+     }
+     g.lineTo(arr[idx++],arr[idx++]);
+     idx++;
+     g.closePath();
+     g.stroke();
+
+     g.beginPath();
+     g.moveTo(arr[idx++],arr[idx++]);
+     idx++;
+     for(i=1;i<len1;i++)
+     {
+       g.lineTo(arr[idx++],arr[idx++]);
+       idx++;
+     }
+     g.closePath();
+     g.stroke();
+     
+     idx-=len1*3;
+     g.beginPath();
+     g.moveTo(arr[idx-3],arr[idx-2]);
+     g.lineTo(arr[idx],arr[idx+1]);
+     for(i=0;i<len1;i++)
+     {
+       if(i&1)
+       {
+         idx+=3;
+       }
+       else
+       { 
+         if(i%4)
+         {
+           g.moveTo(arr[idx++],arr[idx++]);
+         }
+         else
+         {
+           g.moveTo(arr[len*3+((i-1)/4|0)*3],arr[len*3+((i-1)/4|0)*3+1]);
+           g.lineTo(arr[idx++],arr[idx++]);
+         }
+         g.lineTo(arr[len*3+(i/4|0)*3],arr[len*3+(i/4|0)*3+1]);
+         idx++;
+      }
+     }
+     g.stroke();
+
+     g.beginPath();
+     g.moveTo(arr[idx++],arr[idx++]);
+     idx++;
+     for(i=1;i<len1;i++)
+     {
+       g.lineTo(arr[idx++],arr[idx++]);
+       idx++;
+     }
+     g.closePath();
+     g.stroke();
+
+     idx-=len1*3;
+     g.beginPath();
+     g.moveTo(arr[st-6],arr[st-5]);
+     g.lineTo(arr[st],arr[st+1]);
+     for(i=0;i<len1;i++)
+     {
+       if(i&1)
+       {
+         idx+=3;
+       }
+       else
+       {
+         
+         if(i%4)
+         { 
+           g.moveTo(arr[st++],arr[st++]);
+           g.lineTo(arr[idx++],arr[idx++]);     
+           st===total-4||g.lineTo(arr[++st],arr[st+1]);       
+         }
+         else
+         { 
+           g.moveTo(arr[idx++],arr[idx++]);          
+           g.lineTo(arr[total-3],arr[total-2]);
+         }
+         idx++;
+       }
+     }
+     g.stroke();
+    
+     g.restore();
+  }
+console.log(typeof cvs.onmousemove==="undefined"?"touchstart":"mousemove");
+  cvs.addEventListener(typeof cvs.onmousemove==="undefined"?"touchstart":"mousemove",function(e){
+        var crd=document.body.getBoundingClientRect();
+        e.type=="touchstart"&&(e=e.touches[0]);        
+        angleY=e.clientX-crd.left-cx>0?0.005:-0.005;
+        angleX=e.clientY-crd.top-cy>0?0.005:-0.005;
+  },false);
+
+   rotate(-1.62,angleY);
+  (function drawFrame(){
+    rotate(angleX,angleY);
+    setPerspective();
+    draw(move);
+    run(drawFrame);
+  })();
+}
+diamond(W/2,H/2,Math.max(120,Math.min(W,H)/4),document.querySelector("canvas"));
+//]]>
+  </script>
+</body>
+</html>
